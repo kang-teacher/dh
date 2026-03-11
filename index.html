@@ -393,6 +393,18 @@
     </section>
 
     <h2 class="section-title">간단 여행 팁</h2>
+        <h2 class="section-title">여행지 지도 보기</h2>
+    <section class="place-card" style="padding: 24px; margin-bottom: 18px;">
+      <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px; align-items:center; justify-content:space-between;">
+        <div>
+          <h3 style="margin:0 0 6px; color:#143b61;">카카오 지도 연동 영역</h3>
+          <p id="map-place-name" style="margin:0; color:#444;">현재 선택된 장소: 도쿄</p>
+        </div>
+        <div style="font-size:0.92rem; color:#666;">※ 실제 사용 전 Kakao JavaScript 키를 넣어야 지도가 표시됩니다.</div>
+      </div>
+      <div id="map" style="width:100%; height:420px; border-radius:18px; overflow:hidden; background:#eef3f8;"></div>
+    </section>
+
     <div class="tips-grid">
       <article class="tip-card">
         <h4>1. 이동 동선 짧게</h4>
@@ -413,7 +425,76 @@
     기본 제작용 샘플 페이지 · GitHub Pages 배포를 위한 index.html 시작 버전
   </footer>
 
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=ea1da6169b4bee4bbd39f128bebcd960&autoload=false"></script>
   <script>
+    const travelData = {
+      tokyo: {
+        name: '도쿄',
+        lat: 35.710063,
+        lng: 139.8107,
+        level: 4,
+        info: '도쿄 스카이트리 주변 기준'
+      },
+      osaka: {
+        name: '오사카',
+        lat: 34.6687,
+        lng: 135.5013,
+        level: 4,
+        info: '도톤보리 주변 기준'
+      },
+      fukuoka: {
+        name: '후쿠오카',
+        lat: 33.5892,
+        lng: 130.4017,
+        level: 4,
+        info: '하카타역 주변 기준'
+      }
+    };
+
+    let map;
+    let marker;
+    let infoWindow;
+
+    function initMap() {
+      kakao.maps.load(function () {
+        const defaultPlace = travelData.tokyo;
+        const container = document.getElementById('map');
+        const options = {
+          center: new kakao.maps.LatLng(defaultPlace.lat, defaultPlace.lng),
+          level: defaultPlace.level
+        };
+
+        map = new kakao.maps.Map(container, options);
+        marker = new kakao.maps.Marker({
+          position: new kakao.maps.LatLng(defaultPlace.lat, defaultPlace.lng)
+        });
+        marker.setMap(map);
+
+        infoWindow = new kakao.maps.InfoWindow({
+          content: `<div style="padding:8px 12px; font-size:13px;">${defaultPlace.name}<br>${defaultPlace.info}</div>`
+        });
+        infoWindow.open(map, marker);
+      });
+    }
+
+    function updateMap(placeId) {
+      if (!window.kakao || !map) return;
+
+      const place = travelData[placeId];
+      const moveLatLng = new kakao.maps.LatLng(place.lat, place.lng);
+      map.setLevel(place.level);
+      map.panTo(moveLatLng);
+
+      marker.setPosition(moveLatLng);
+      infoWindow.close();
+      infoWindow = new kakao.maps.InfoWindow({
+        content: `<div style="padding:8px 12px; font-size:13px;">${place.name}<br>${place.info}</div>`
+      });
+      infoWindow.open(map, marker);
+
+      document.getElementById('map-place-name').textContent = `현재 선택된 장소: ${place.name}`;
+    }
+
     function showPlace(placeId, clickedButton) {
       const sections = document.querySelectorAll('.place-section');
       sections.forEach(section => {
@@ -426,8 +507,11 @@
       buttons.forEach(button => button.classList.remove('active'));
       clickedButton.classList.add('active');
 
+      updateMap(placeId);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    window.addEventListener('load', initMap);
   </script>
 </body>
 </html>
